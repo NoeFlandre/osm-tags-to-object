@@ -4,6 +4,8 @@ Download OpenStreetMap **ways + relations** (no nodes) that match a set of tags,
 
 Supports **resumable planet-wide fetches** via a tile grid + checkpoint file, and **streaming Parquet output** with bounded memory.
 
+> **If you are a coding agent picking up this codebase, read [`AGENTS.md`](./AGENTS.md) first.** It is a condensed orientation with the module map, conventions, and gotchas. Deeper material lives under [`docs/`](./docs/).
+
 ## Table of contents
 
 - [Quickstart](#quickstart)
@@ -13,6 +15,17 @@ Supports **resumable planet-wide fetches** via a tile grid + checkpoint file, an
 - [Python API](#python-api)
 - [Project layout](#project-layout)
 - [How it works](#how-it-works)
+- [Documentation](#documentation)
+
+## Documentation
+
+Detailed topical docs live under [`docs/`](./docs/):
+
+- [`docs/architecture.md`](./docs/architecture.md) — end-to-end data flow, the data model, extension points.
+- [`docs/operations.md`](./docs/operations.md) — runbook: dev setup, running tests, scaling a fetch, syncing to the HF bucket, debugging.
+- [`docs/decisions.md`](./docs/decisions.md) — design rationale (why `out geom;`, why no nodes, why two-stage map, etc.).
+- [`docs/gotchas.md`](./docs/gotchas.md) — known traps with reproduction notes.
+- [`docs/milestones.md`](./docs/milestones.md) — project history: what was built when, and what was learned.
 
 ## Quickstart
 
