@@ -55,6 +55,34 @@ Tile keys are derived from the tile bbox, so the checkpoint file is portable acr
 
 **Output is also streamed.** `ParquetWriter` caps memory at one in-flight row group (default 10 000 rows). Memory usage stays bounded regardless of dataset size.
 
+### Country-scale example: French forests
+
+```bash
+# Fetch all `landuse=forest` polygons across mainland France.
+# 9 x 14 = 126 tiles of ~1 deg each, resumable via checkpoint.
+uv run osm-tags-to-object planet \
+    --tags landuse=forest \
+    --bbox 42.3,-5.0,51.1,8.3 \
+    --tile-rows 9 --tile-cols 14 \
+    --checkpoint ./data/france-forest.cp.json \
+    --format parquet \
+    -o ./data/france-forest.parquet
+
+# Build a map-friendly GeoJSON from the parquet
+# (drops relations, keeps ways > 5 km^2 bbox, RDP-simplifies).
+uv run python scripts/parquet_to_map_geojson.py \
+    --input ./data/france-forest.parquet \
+    --output ./data/france-forest.map.geojson \
+    --min-bbox-km2 5
+
+# Render the interactive map
+uv run osm-tags-to-object map \
+    -i ./data/france-forest.map.geojson \
+    -o ./data/france-forest.html
+```
+
+The full France forest dataset is ~640 MB of Parquet with ~890 000 polygons (847 K ways + 42 K relations). The map-friendly GeoJSON drops to ~14 MB (~6 000 polygons: only ways whose bbox exceeds 5 km^2, simplified with Ramer-Douglas-Peucker). Hover any forest to see its OSM tags.
+
 ## Data storage
 
 All output files go under `./data/`. That directory is gitignored and is the source for `hf sync`. See [Data storage](#data-storage) below for the sync commands.
