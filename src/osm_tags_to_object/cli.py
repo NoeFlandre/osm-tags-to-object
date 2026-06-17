@@ -15,8 +15,10 @@ from pathlib import Path
 import click
 
 from . import map as map_mod
+from .checkpoint import Checkpoint, FileCheckpointStore
 from .client import OverpassClient
 from .pipeline import fetch_matching_objects
+from .planet import fetch_planet
 from .storage import write_objects
 from .tags import TagFilter
 
@@ -164,6 +166,94 @@ def map_cmd(input: Path, output: Path) -> None:
     """Render an interactive map of polygons from a GeoJSON file."""
     map_mod.render_map(input, output)
     click.echo(f"Map written to {output}")
+
+
+@cli.command("planet")
+@click.option(
+    "--tags",
+    required=True,
+    help="Comma-separated tag spec, e.g. 'amenity=bench,fountain'.",
+)
+@click.option(
+    "--bbox",
+    required=True,
+    help="Bounding box as south,west,north,east.",
+)
+@click.option(
+    "--tile-rows",
+    default=4,
+    show_default=True,
+    type=int,
+    help="Number of rows to split the bbox into.",
+)
+@click.option(
+    "--tile-cols",
+    default=4,
+    show_default=True,
+    type=int,
+    help="Number of columns to split the bbox into.",
+)
+@click.option(
+    "--checkpoint",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="Path to a checkpoint file. Re-running with the same path resumes.",
+)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["geojson", "parquet"]),
+    default="geojson",
+    show_default=True,
+)
+@click.option(
+    "--output",
+    "-o",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="Output file path. Parent directories are created.",
+)
+@click.option(
+    "--endpoint",
+    default=OverpassClient.DEFAULT_URL,
+    show_default=True,
+    help="Overpass API endpoint URL.",
+)
+def planet_cmd(
+    tags: str,
+    bbox: str,
+    tile_rows: int,
+    tile_cols: int,
+    checkpoint: Path,
+    fmt: str,
+    output: Path,
+    endpoint: str,
+) -> None:
+    """Fetch a large region tile-by-tile with checkpointing for resumability."""
+    filter_tags = parse_tags_spec(tags)
+    bbox_tuple = parse_bbox_spec(bbox)
+    output_path = Path(output)
+
+    cp = Checkpoint(FileCheckpointStore(checkpoint))
+    total = tile_rows * tile_cols
+    click.echo(
+        f"Fetching tags={filter_tags} bbox={bbox_tuple} tiled "
+        f"{tile_rows}x{tile_cols} ({total} tiles) via {endpoint}"
+    )
+    click.echo(f"Resuming from checkpoint {checkpoint}: {cp.count}/{total} tiles done")
+
+    with OverpassClient(url=endpoint) as client:
+        objects = fetch_planet(
+            filter_tags,
+            bbox_tuple,
+            cp,
+            tile_rows=tile_rows,
+            tile_cols=tile_cols,
+            client=client,
+        )
+        write_objects(objects, output_path, format=fmt)
+
+    click.echo(f"Done: {cp.count}/{total} tiles done; wrote {output_path}")
 
 
 if __name__ == "__main__":

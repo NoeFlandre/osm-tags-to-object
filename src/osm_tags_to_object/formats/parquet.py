@@ -1,4 +1,9 @@
-"""Parquet writer for OSM objects using pyarrow."""
+"""Parquet writer for OSM objects using pyarrow.
+
+Uses :class:`pyarrow.parquet.ParquetWriter` so memory stays bounded by
+``row_group_size`` regardless of how many objects are written. Each
+flush emits a new row group; partial row groups are flushed on close.
+"""
 
 from __future__ import annotations
 
@@ -25,18 +30,29 @@ _SCHEMA = pa.schema(
     ]
 )
 
+DEFAULT_ROW_GROUP_SIZE = 10_000
+
 
 class ParquetWriter:
-    """Write OSM objects to a Parquet file.
+    """Write OSM objects to a Parquet file as a stream of row groups.
 
-    Objects are buffered in memory until ``close`` (called by ``__exit__``).
-    Sufficient for the prototype; for very large jobs, swap in a row-group
-    streaming implementation without changing the public API.
+    Rows are buffered in memory until ``row_group_size`` rows have
+    accumulated (or until ``close``), at which point the buffer is
+    flushed as one Parquet row group. This caps peak memory at
+    ``row_group_size`` rows plus one in-flight row group.
     """
 
-    def __init__(self, path: Path) -> None:
-        self._path = path
-        self._rows: list[dict[str, Any]] = []
+    def __init__(
+        self,
+        path: Path,
+        row_group_size: int = DEFAULT_ROW_GROUP_SIZE,
+    ) -> None:
+        if row_group_size < 1:
+            raise ValueError(f"row_group_size must be >= 1, got {row_group_size}")
+        self._path = Path(path)
+        self._row_group_size = row_group_size
+        self._buffer: list[dict[str, Any]] = []
+        self._writer: pq.ParquetWriter | None = None
         self._closed = False
 
     def __enter__(self) -> "ParquetWriter":
@@ -48,18 +64,36 @@ class ParquetWriter:
     def write(self, obj: OSMObject) -> None:
         if self._closed:
             raise RuntimeError("ParquetWriter is closed")
-        self._rows.append(_to_row(obj))
+        self._buffer.append(_to_row(obj))
+        if len(self._buffer) >= self._row_group_size:
+            self._flush()
 
     def close(self) -> None:
+        """Flush any buffered rows and close the underlying writer."""
         if self._closed:
             return
         self._closed = True
-        if not self._rows:
-            # Write an empty table with the schema so the file is still valid.
-            table = pa.table({f.name: [] for f in _SCHEMA}, schema=_SCHEMA)
-        else:
-            table = pa.Table.from_pylist(self._rows, schema=_SCHEMA)
-        pq.write_table(table, self._path)
+        try:
+            if self._writer is None and not self._buffer:
+                # Zero writes ever: produce a valid empty file with our schema
+                # so downstream readers still know what to expect.
+                empty = pa.table({f.name: [] for f in _SCHEMA}, schema=_SCHEMA)
+                pq.write_table(empty, str(self._path))
+            else:
+                self._flush()
+        finally:
+            if self._writer is not None:
+                self._writer.close()
+                self._writer = None
+
+    def _flush(self) -> None:
+        if not self._buffer:
+            return
+        table = pa.Table.from_pylist(self._buffer, schema=_SCHEMA)
+        if self._writer is None:
+            self._writer = pq.ParquetWriter(str(self._path), _SCHEMA)
+        self._writer.write_table(table)
+        self._buffer = []
 
 
 def _to_row(obj: OSMObject) -> dict[str, Any]:
