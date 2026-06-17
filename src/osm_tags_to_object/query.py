@@ -46,7 +46,5 @@ def build_overpass_query(
         f"(\n"
         f"{body}\n"
         f");\n"
-        f"out body;\n"
-        f">;\n"
-        f"out skel qt;"
+        f"out geom;"
     )

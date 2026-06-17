@@ -1,6 +1,7 @@
 import httpx
 
 from osm_tags_to_object.client import OverpassClient
+from osm_tags_to_object.retry import RetryConfig
 
 
 def test_client_posts_query_to_endpoint_and_returns_json():
@@ -64,16 +65,45 @@ def test_client_sets_a_descriptive_user_agent():
     assert "osm-tags-to-object" in ua
 
 
-def test_client_raises_on_http_error():
+def test_client_raises_on_http_error_after_retries_exhausted():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(429, text="Too Many Requests")
 
     transport = httpx.MockTransport(handler)
     with httpx.Client(transport=transport) as http_client:
-        client = OverpassClient(http_client=http_client)
+        client = OverpassClient(
+            http_client=http_client,
+            retry_config=RetryConfig(max_attempts=2),
+            sleep=lambda _: None,
+        )
         try:
             client.fetch("way[amenity=bench];")
         except httpx.HTTPStatusError as exc:
             assert exc.response.status_code == 429
         else:
             raise AssertionError("expected HTTPStatusError")
+
+
+def test_client_retries_on_429_and_eventually_succeeds():
+    attempts = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts["n"] += 1
+        if attempts["n"] < 3:
+            return httpx.Response(429, text="Too Many Requests")
+        return httpx.Response(
+            200,
+            json={"elements": [{"type": "way", "id": 1, "tags": {"amenity": "bench"}}]},
+        )
+
+    transport = httpx.MockTransport(handler)
+    with httpx.Client(transport=transport) as http_client:
+        client = OverpassClient(
+            http_client=http_client,
+            retry_config=RetryConfig(max_attempts=5, base_delay=0.0),
+            sleep=lambda _: None,
+        )
+        result = client.fetch('way["amenity"="bench"];')
+
+    assert attempts["n"] == 3
+    assert result["elements"][0]["id"] == 1
