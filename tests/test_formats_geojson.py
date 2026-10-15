@@ -66,7 +66,7 @@ def test_geojson_writer_puts_tags_in_properties(tmp_path: Path):
 def test_geojson_writer_skips_ways_with_no_geometry(tmp_path: Path):
     out = tmp_path / "out.geojson"
     with GeoJSONWriter(out) as w:
-        w.write(OSMObject(type="way", id=1, tags={"amenity": "bench"}))  # no geom
+        w.write(OSMObject(type="way", id=1, tags={"amenity": "bench"}))
 
     assert _read_json(out)["features"] == []
 
@@ -74,9 +74,8 @@ def test_geojson_writer_skips_ways_with_no_geometry(tmp_path: Path):
 def test_geojson_writer_closes_feature_list_properly(tmp_path: Path):
     out = tmp_path / "out.geojson"
     GeoJSONWriter(out).__enter__()
-    Path(out).write_text("")  # simulate early crash - we never close
+    Path(out).write_text("")
 
-    # Re-open in append mode for this test by using a fresh writer
     out2 = tmp_path / "out2.geojson"
     w = GeoJSONWriter(out2)
     w.__enter__()

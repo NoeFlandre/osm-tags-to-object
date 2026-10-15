@@ -72,19 +72,15 @@ def test_checkpoint_reset_clears_state_and_persists(tmp_path: Path):
     cp.mark_done("b")
     cp.reset()
     assert cp.count == 0
-    # New instance should also see empty.
     assert Checkpoint(FileCheckpointStore(path)).count == 0
 
 
 def test_checkpoint_writes_are_atomic_no_partial_files(tmp_path: Path):
-    """save() must not leave a half-written file on disk."""
     path = tmp_path / "cp.json"
     store = FileCheckpointStore(path)
     cp = Checkpoint(store)
     cp.mark_done("a")
 
-    # No leftover .tmp files after a normal save.
     leftovers = list(path.parent.glob("*.tmp"))
     assert leftovers == []
-    # The final file is valid JSON.
     json.loads(path.read_text())

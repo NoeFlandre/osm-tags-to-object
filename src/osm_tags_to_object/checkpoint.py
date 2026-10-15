@@ -1,13 +1,3 @@
-"""Persistent checkpoints for resumable long-running fetches.
-
-A :class:`Checkpoint` tracks which work units have completed; an instance
-of :class:`FileCheckpointStore` saves that set to disk so a crashed or
-interrupted run can pick up where it left off.
-
-The store writes atomically (temp file + rename) so a crash mid-write
-never leaves a half-written file that would look like a corrupt checkpoint.
-"""
-
 from __future__ import annotations
 
 import json

@@ -10,12 +10,9 @@ from osm_tags_to_object.retry import RetryConfig
 
 
 def _install_mock_overpass(monkeypatch, payload: dict) -> None:
-    """Replace the default OverpassClient with one that uses a MockTransport."""
-
     def factory(*args, **kwargs):
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(200, json=payload)
-        # Force a low-retry, no-sleep client so tests are fast.
         kwargs.setdefault("retry_config", RetryConfig(max_attempts=2))
         kwargs.setdefault("sleep", lambda _: None)
         kwargs["http_client"] = httpx.Client(transport=httpx.MockTransport(handler))
@@ -65,7 +62,6 @@ def test_cli_fetch_writes_geojson_file(monkeypatch, tmp_path: Path):
 
 
 def test_cli_fetch_rejects_invalid_bbox(monkeypatch, tmp_path: Path):
-    # Network must not be touched for a validation failure.
     def fail(*_a, **_kw):
         raise AssertionError("OverpassClient should not be instantiated on bad input")
 
@@ -82,7 +78,6 @@ def test_cli_fetch_rejects_invalid_bbox(monkeypatch, tmp_path: Path):
 
 
 def test_cli_map_renders_an_html_file(tmp_path: Path):
-    # Write a tiny GeoJSON FeatureCollection.
     geojson = tmp_path / "in.geojson"
     geojson.write_text(
         json.dumps(

@@ -1,13 +1,3 @@
-"""Command-line interface for ``osm-tags-to-object``.
-
-Two subcommands:
-
-* ``fetch`` - run an Overpass query for the given tags and stream the
-  matching ways + relations to a GeoJSON or Parquet file under ``./data/``.
-* ``map`` - turn a previously written GeoJSON file into an interactive
-  Leaflet HTML map with polygon tooltips showing the OSM tags.
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -21,11 +11,6 @@ from .pipeline import fetch_matching_objects
 from .planet import fetch_planet
 from .storage import write_objects
 from .tags import TagFilter
-
-
-# ---------------------------------------------------------------------------
-# Spec parsers
-# ---------------------------------------------------------------------------
 
 
 def parse_tags_spec(spec: str) -> dict[str, str | list[str]]:
@@ -85,11 +70,6 @@ def parse_bbox_spec(spec: str) -> tuple[float, float, float, float]:
         return float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])
     except ValueError as exc:
         raise ValueError(f"bbox values must be numeric: {spec!r}") from exc
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
 
 
 @click.group()

@@ -1,10 +1,3 @@
-"""End-to-end live smoke check.
-
-Run with: PYTHONPATH=src uv run python scripts/smoke.py
-Fetches a small bbox from the real Overpass API, writes GeoJSON, then
-renders the interactive map. Verifies all major modules cooperate.
-"""
-
 import json
 from pathlib import Path
 

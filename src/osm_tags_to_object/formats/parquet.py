@@ -1,10 +1,3 @@
-"""Parquet writer for OSM objects using pyarrow.
-
-Uses :class:`pyarrow.parquet.ParquetWriter` so memory stays bounded by
-``row_group_size`` regardless of how many objects are written. Each
-flush emits a new row group; partial row groups are flushed on close.
-"""
-
 from __future__ import annotations
 
 import json

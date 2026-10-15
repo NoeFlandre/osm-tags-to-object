@@ -76,14 +76,12 @@ def test_cli_planet_writes_geojson_and_checkpoint(monkeypatch, tmp_path: Path):
     data = json.loads(out.read_text())
     assert len(data["features"]) == 1
     assert data["features"][0]["properties"]["amenity"] == "bench"
-    # All 4 tiles done after the run.
     persisted = json.loads(cp_path.read_text())
     assert len(persisted) == 4
 
 
 def test_cli_planet_resumes_from_existing_checkpoint(monkeypatch, tmp_path: Path):
     cp_path = tmp_path / "cp.json"
-    # Pre-seed the checkpoint as if 2 tiles are already done.
     cp_path.write_text(
         json.dumps(
             [
@@ -93,7 +91,6 @@ def test_cli_planet_resumes_from_existing_checkpoint(monkeypatch, tmp_path: Path
         )
     )
 
-    # Mock returns one object for any un-done tile.
     payloads = {
         "tile_43.500000_7.000000_44.000000_7.500000": {
             "elements": [
@@ -131,7 +128,6 @@ def test_cli_planet_resumes_from_existing_checkpoint(monkeypatch, tmp_path: Path
 
     assert result.exit_code == 0, result.output
     data = json.loads(out.read_text())
-    # Only the one previously-un-done tile produced an object.
     assert len(data["features"]) == 1
     assert data["features"][0]["id"] == 99
 
