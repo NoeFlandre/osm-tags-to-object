@@ -1,9 +1,3 @@
-"""Render an interactive Leaflet map of OSM polygons with hover tooltips.
-
-Uses :mod:`folium` to generate a self-contained HTML file. Each polygon's
-tags appear as a tooltip on hover and a popup on click.
-"""
-
 from __future__ import annotations
 
 import json
@@ -24,7 +18,7 @@ def compute_bounds(
     lats: list[float] = []
     lons: list[float] = []
     for feature in features:
-        for lon, lat in _iter_points(feature.get("geometry") or {}):
+        for lon, lat in _iter_lon_lat(feature.get("geometry") or {}):
             lats.append(lat)
             lons.append(lon)
     if not lats:
@@ -32,8 +26,7 @@ def compute_bounds(
     return ((min(lats), min(lons)), (max(lats), max(lons)))
 
 
-def _iter_points(geom: dict[str, Any]) -> Iterator[tuple[float, float]]:
-    """Yield ``(lon, lat)`` tuples for all points in a GeoJSON geometry."""
+def _iter_lon_lat(geom: dict[str, Any]) -> Iterator[tuple[float, float]]:
     coords = geom.get("coordinates") or []
     geom_type = geom.get("type")
     if geom_type == "Polygon":

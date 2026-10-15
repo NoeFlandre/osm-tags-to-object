@@ -2,15 +2,10 @@ from __future__ import annotations
 
 from .tags import TagFilter
 
-# Overpass element types we care about. Nodes are deliberately excluded.
 _ELEMENT_TYPES = ("way", "relation")
 
 
 def _iter_tag_selectors(filter: TagFilter) -> list[tuple[str, str]]:
-    """Expand a TagFilter into a flat list of (key, value) pairs.
-
-    Multiple values for the same key become separate selectors (OR semantics).
-    """
     selectors: list[tuple[str, str]] = []
     for key, value in filter.tags.items():
         values = value if isinstance(value, list) else [value]

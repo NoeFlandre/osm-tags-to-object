@@ -63,7 +63,6 @@ def test_retry_uses_exponential_backoff_between_attempts():
         )
     except httpx.HTTPStatusError:
         pass
-    # delays between attempts 1->2, 2->3, 3->4
     assert sleeps == [1.0, 2.0, 4.0]
 
 
@@ -83,7 +82,6 @@ def test_retry_caps_delay_at_max_delay():
         )
     except httpx.HTTPStatusError:
         pass
-    # 10, 15 (capped), 15 (capped), 15 (capped)
     assert sleeps == [10.0, 15.0, 15.0, 15.0]
 
 

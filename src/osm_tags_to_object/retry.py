@@ -1,10 +1,3 @@
-"""Retry helper with exponential backoff and Retry-After support.
-
-Used by :class:`osm_tags_to_object.client.OverpassClient` to survive the
-public Overpass instance's aggressive 429 / 503 rate limiting without
-leaking that concern into the rest of the codebase.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass

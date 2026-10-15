@@ -1,5 +1,3 @@
-"""Output format writers (GeoJSON, Parquet)."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,7 +18,7 @@ def open_writer(path: Path, format: Literal["geojson", "parquet"]) -> FormatWrit
     if format == "geojson":
         return GeoJSONWriter(path)
     if format == "parquet":
-        from .parquet import ParquetWriter  # local import: optional dep
+        from .parquet import ParquetWriter
 
         return ParquetWriter(path)
     raise ValueError(f"Unknown format: {format!r}")

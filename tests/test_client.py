@@ -53,7 +53,6 @@ def test_client_sets_a_descriptive_user_agent():
         return httpx.Response(200, json={"elements": []})
 
     transport = httpx.MockTransport(handler)
-    # No http_client passed -> client builds its own with the configured UA.
     client = OverpassClient(http_client=httpx.Client(transport=transport))
     client.fetch("out;")
     client.close()

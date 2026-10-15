@@ -42,7 +42,6 @@ def test_write_objects_to_parquet(tmp_path: Path):
 
 
 def test_write_objects_accepts_a_generator(tmp_path: Path):
-    """Generators must work; nothing should be materialized eagerly."""
     path = tmp_path / "out.geojson"
 
     def gen():

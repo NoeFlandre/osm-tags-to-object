@@ -1,10 +1,3 @@
-"""Persist OSM objects to disk in a streaming fashion.
-
-The output path and format are explicit so callers always know where the
-data is going. Designed to plug straight into the HF sync workflow
-(``hf sync ./data hf://buckets/...``).
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterable

@@ -9,7 +9,6 @@ def test_query_for_single_tag_excludes_nodes():
     assert "way[" in q
     assert "relation[" in q
     assert '["amenity"="bench"]' in q
-    # Nodes must never be requested
     assert "node[" not in q
 
 
@@ -17,7 +16,7 @@ def test_query_with_multiple_values_for_same_key():
     q = build_overpass_query(TagFilter({"amenity": ["bench", "fountain"]}))
     assert '["amenity"="bench"]' in q
     assert '["amenity"="fountain"]' in q
-    # Each (key, value) pair appears once for way and once for relation
+    # Each (key, value) pair appears once for way and once for relation.
     assert q.count('["amenity"="bench"]') == 2
     assert q.count('["amenity"="fountain"]') == 2
 
@@ -38,5 +37,4 @@ def test_query_with_bbox_uses_bbox_filter():
 
 def test_query_without_bbox_is_planet_wide():
     q = build_overpass_query(TagFilter({"amenity": "bench"}))
-    # No numeric coordinate bbox in the query
     assert not re.search(r"\(\d+\.?\d*,\d+\.?\d*,\d+\.?\d*,\d+\.?\d*\)", q)

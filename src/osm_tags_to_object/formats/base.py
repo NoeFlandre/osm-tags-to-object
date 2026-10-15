@@ -1,5 +1,3 @@
-"""Base protocol for streaming OSMObject writers."""
-
 from __future__ import annotations
 
 from typing import Protocol

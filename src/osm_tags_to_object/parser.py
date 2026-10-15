@@ -4,7 +4,6 @@ from typing import Any
 
 from .models import OSMObject
 
-# OSM element types this package cares about. Nodes are filtered out.
 _ALLOWED_TYPES = frozenset({"way", "relation"})
 
 

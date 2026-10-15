@@ -81,7 +81,6 @@ def test_render_map_embeds_feature_properties_as_tooltip(tmp_path: Path):
     render_map(geojson, html)
 
     text = html.read_text()
-    # The properties must appear in the rendered HTML for hover/tooltip to work.
     assert "amenity" in text
     assert "bench" in text
     assert "material" in text

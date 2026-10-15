@@ -1,9 +1,3 @@
-"""Tile a bounding box into a regular grid of smaller bboxes.
-
-Used together with :mod:`osm_tags_to_object.checkpoint` to break large
-planet-wide fetches into bounded, resumable units.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterator

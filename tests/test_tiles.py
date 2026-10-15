@@ -14,19 +14,16 @@ def test_tile_grid_single_tile_returns_unchanged_bbox():
 
 
 def test_tile_grid_2x2_produces_4_non_overlapping_tiles_covering_the_bbox():
-    bbox = (43.0, 7.0, 45.0, 9.0)  # 2 deg lat x 2 deg lon
+    bbox = (43.0, 7.0, 45.0, 9.0)
     grid = TileGrid(bbox, rows=2, cols=2)
     tiles = list(grid)
     assert len(tiles) == 4
 
-    # Each tile is 1 deg x 1 deg.
     for tile in tiles:
         south, west, north, east = tile.bbox
         assert round(north - south, 6) == 1.0
         assert round(east - west, 6) == 1.0
 
-    # Tiles should partition the original bbox (no overlap, no gaps).
-    # Sum of areas equals original area.
     total_area = sum(
         (n - s) * (e - w) for s, w, n, e in (t.bbox for t in tiles)
     )
@@ -38,8 +35,8 @@ def test_tile_grid_keys_are_unique_and_deterministic():
     bbox = (43.0, 7.0, 44.0, 8.0)
     grid = TileGrid(bbox, rows=2, cols=3)
     keys = [t.key for t in grid]
-    assert len(keys) == len(set(keys))  # unique
-    assert keys == [t.key for t in TileGrid(bbox, rows=2, cols=3)]  # deterministic
+    assert len(keys) == len(set(keys))
+    assert keys == [t.key for t in TileGrid(bbox, rows=2, cols=3)]
 
 
 def test_tile_grid_length_matches_rows_times_cols():
@@ -52,10 +49,8 @@ def test_tile_grid_horizontal_split_only():
     grid = TileGrid(bbox, rows=1, cols=3)
     tiles = list(grid)
     assert len(tiles) == 3
-    # All have same south/north.
     assert {t.bbox[0] for t in tiles} == {43.0}
     assert {t.bbox[2] for t in tiles} == {44.0}
-    # Different west/east.
     wests = sorted(t.bbox[1] for t in tiles)
     assert wests == [7.0, pytest.approx(7.666666666666667), pytest.approx(8.333333333333334)]
 
@@ -65,7 +60,6 @@ def test_tile_grid_vertical_split_only():
     grid = TileGrid(bbox, rows=3, cols=1)
     tiles = list(grid)
     assert len(tiles) == 3
-    # All have same west/east.
     assert {t.bbox[1] for t in tiles} == {7.0}
     assert {t.bbox[3] for t in tiles} == {8.0}
 

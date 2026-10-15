@@ -1,5 +1,3 @@
-"""Streaming GeoJSON FeatureCollection writer for OSMObject."""
-
 from __future__ import annotations
 
 import json
@@ -72,7 +70,7 @@ def _to_feature(obj: OSMObject) -> dict[str, Any] | None:
         ]
         if not rings:
             return None
-        # Close each ring
+        # GeoJSON linear rings must repeat their first coordinate.
         rings = [ring + [ring[0]] for ring in rings]
         geometry_type = "MultiPolygon" if len(rings) > 1 else "Polygon"
         coordinates = (

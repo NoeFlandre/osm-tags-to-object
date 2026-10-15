@@ -14,11 +14,6 @@ from osm_tags_to_object.tiles import TileGrid
 
 
 def _make_client(per_tile_payloads: dict[str, dict]) -> tuple[OverpassClient, list[str]]:
-    """Return an OverpassClient whose MockTransport responds per tile key.
-
-    The ``per_tile_payloads`` dict maps tile key -> Overpass JSON payload.
-    Calls for tiles not in the dict return an empty ``elements`` list.
-    """
     seen: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -82,11 +77,11 @@ def test_fetch_planet_yields_objects_from_every_tile(tmp_path: Path):
 
     assert len(objects) == 2
     assert {o.id for o in objects} == {1, 2}
-    assert len(seen) == 4  # all 4 tiles queried
+    assert len(seen) == 4
 
 
 def test_fetch_planet_skips_already_completed_tiles(tmp_path: Path):
-    client, seen = _make_client({})  # all tiles return empty
+    client, seen = _make_client({})
     cp = Checkpoint(FileCheckpointStore(tmp_path / "cp.json"))
 
     tiles = list(TileGrid((43.0, 7.0, 44.0, 8.0), rows=2, cols=2))
@@ -105,25 +100,22 @@ def test_fetch_planet_skips_already_completed_tiles(tmp_path: Path):
         )
     )
 
-    # Only the 2 un-done tiles were fetched.
     assert len(seen) == 2
 
 
 def test_fetch_planet_persists_progress_to_disk(tmp_path: Path):
     cp_path = tmp_path / "cp.json"
 
-    # First client: responds to tile #0 then errors on tile #1 so the run
-    # is forced to stop after exactly one successful tile.
     first_attempt = {"n": 0}
 
-    def first_handler(request: httpx.Request) -> httpx.Response:
+    def first_success_then_500(request: httpx.Request) -> httpx.Response:
         first_attempt["n"] += 1
         if first_attempt["n"] == 1:
             return httpx.Response(200, json={"elements": []})
         return httpx.Response(500, text="boom")
 
     client = OverpassClient(
-        http_client=httpx.Client(transport=httpx.MockTransport(first_handler)),
+        http_client=httpx.Client(transport=httpx.MockTransport(first_success_then_500)),
         retry_config=RetryConfig(max_attempts=1),
         sleep=lambda _: None,
     )
@@ -145,7 +137,6 @@ def test_fetch_planet_persists_progress_to_disk(tmp_path: Path):
     persisted = json.loads(cp_path.read_text())
     assert len(persisted) == 1
 
-    # Second run with a fresh Checkpoint picks up from disk.
     client2, seen2 = _make_client({})
     cp2 = Checkpoint(FileCheckpointStore(cp_path))
     list(
@@ -155,7 +146,6 @@ def test_fetch_planet_persists_progress_to_disk(tmp_path: Path):
     )
     client2.close()
 
-    # Only the remaining 3 tiles were fetched.
     assert len(seen2) == 3
 
 

@@ -1,10 +1,3 @@
-"""Tile a region into bounded, resumable fetches.
-
-Combine :class:`~osm_tags_to_object.tiles.TileGrid` and
-:class:`~osm_tags_to_object.checkpoint.Checkpoint` to fetch planet-wide
-data without losing progress when a run is interrupted.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterator

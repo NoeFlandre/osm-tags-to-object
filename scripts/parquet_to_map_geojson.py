@@ -2,15 +2,6 @@
 
 Reads ``./data/france-forest.parquet`` (large) and writes
 ``./data/france-forest.map.geojson`` (small enough for folium).
-
-Steps:
-1. Drop relations entirely - they're multipolygons whose geometry we'd
-   have to reassemble, and they tend to be large aggregated forests
-   already represented by their constituent ways.
-2. Keep ways whose bbox area (deg^2) exceeds ``--min-bbox-area`` so the
-   map only shows forests that are visually meaningful at country zoom.
-3. Simplify each remaining polygon with Ramer-Douglas-Peucker so the
-   GeoJSON doesn't dwarf the actual content.
 """
 
 from __future__ import annotations
@@ -25,7 +16,7 @@ import pyarrow.parquet as pq
 # Approximate metres per degree at France's latitude (~46 deg).
 # Used only for size heuristics, not for accurate cartography.
 METRES_PER_DEG_LAT = 111_320.0
-METRES_PER_DEG_LON_AT_46 = 111_320.0 * math.cos(math.radians(46.0))  # ~77,400
+METRES_PER_DEG_LON_AT_46 = 111_320.0 * math.cos(math.radians(46.0))
 
 
 def bbox_area_deg2(coords: list[tuple[float, float]]) -> float:
@@ -65,7 +56,6 @@ def rdp(points: list[tuple[float, float]], epsilon: float) -> list[tuple[float, 
         cx, cy = ax + t * dx, ay + t * dy
         return math.hypot(px - cx, py - cy)
 
-    # Find point with max distance from line a->b
     a, b = points[0], points[-1]
     max_d = 0.0
     max_i = 0
@@ -120,6 +110,7 @@ def main() -> None:
         out.write('{"type": "FeatureCollection", "features": [\n')
         first = True
         for row in rows:
+            # Relations need member assembly and are represented by their constituent ways.
             if row["type"] != "way":
                 skipped_rel += 1
                 continue
